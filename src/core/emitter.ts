@@ -95,7 +95,10 @@ export class Pulse {
 	 * @param args - Arguments to pass to the listeners.
 	 * @returns An object indicating whether the emission was successful and any errors that occurred.
 	 */
-	emit<T = any>(event: string, ...args: T[]): EmitResult {
+	emit<T = any>(
+		event: string,
+		...args: T[]
+	): EmitResult | Promise<EmitResult> {
 		const listeners = this.events.get(event)
 
 		if (!listeners || listeners.length === 0) {
@@ -103,15 +106,31 @@ export class Pulse {
 		}
 
 		const errors: Error[] = []
+		const promises: Promise<void>[] = []
+
 		for (const listener of listeners) {
 			try {
 				const result = listener(...args)
+
 				if (result instanceof Promise) {
-					result.catch((err) => errors.push(err))
+					promises.push(result)
 				}
 			} catch (err) {
 				errors.push(err as Error)
 			}
+		}
+
+		if (promises.length > 0) {
+			return Promise.all(promises)
+				.then(() => {
+					return errors.length > 0
+						? { success: false, errors }
+						: { success: true }
+				})
+				.catch((err) => {
+					errors.push(err as Error)
+					return { success: false, errors }
+				})
 		}
 
 		return errors.length > 0 ? { success: false, errors } : { success: true }
