@@ -7,15 +7,43 @@ import {
 } from './types'
 
 /**
- * Pulse is a lightweight, environment-agnostic EventEmitter designed to handle
- * both synchronous and asynchronous event listeners. It supports key features like
- * one-time listeners, event removal, and a limit on the number of listeners.
+ * Pulse is an advanced, lightweight, and environment-agnostic EventEmitter
+ * designed to handle both synchronous and asynchronous event listeners.
+ * It supports features like one-time listeners, pattern-based events,
+ * error handling, and event removal with flexibility and precision.
  *
- * Usage:
+ * Key Features:
+ * - Synchronous and asynchronous listener support.
+ * - Register one-time listeners with an optional limit on executions.
+ * - Pattern-based event matching using regular expressions.
+ * - Built-in error handling with custom error listeners.
+ * - Weak reference listener management for object-based listeners.
+ * - Retrieve, clear, or remove listeners for specific or wildcard events.
+ * - Environment-agnostic and suitable for use in Node.js, Bun, Deno, or browser environments.
+ *
+ * Example Usage:
  * const emitter = new Pulse();
+ *
+ * // Register a basic listener
  * emitter.on('event', (data) => console.log(data));
+ *
+ * // Emit an event
  * emitter.emit('event', 'Hello, world!');
+ *
+ * // Register a pattern-based listener
+ * emitter.onPattern(/^user:.+$/, (event, data) => console.log(`Pattern: ${event}`, data));
+ * emitter.emit('user:login', { userId: 123 });
+ *
+ * // Handle errors
+ * emitter.onError((event, error) => console.error(`Error in ${event}:`, error));
+ *
+ * // Use one-time listeners
+ * emitter.once('single', (data) => console.log('One-time event:', data), 2);
+ * emitter.emit('single', 'Run 1');
+ * emitter.emit('single', 'Run 2');
+ * emitter.emit('single', 'Run 3'); // Will not execute
  */
+
 export class Pulse {
 	private events: EventMap
 	private weakListeners: WeakMap<object, Set<Listener<any>>>
