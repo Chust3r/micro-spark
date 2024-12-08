@@ -53,17 +53,34 @@ export class Pulse {
 	}
 
 	/**
-	 * Registers a one-time listener for a specified event.
-	 * The listener is removed after it is executed.
+	 * Registers a one-time listener for a specified event with a limit on the number of emissions.
+	 * The listener is removed after it has been emitted a specified number of times.
+	 *
+	 * This method allows you to control how many times an event can trigger the listener.
+	 * Once the event has been emitted the specified number of times, the listener is automatically removed.
 	 *
 	 * @param event - The name of the event.
 	 * @param listener - The function to execute when the event is emitted.
+	 * @param maxEmits - The maximum number of times the listener will be called before being removed. Default is 1.
 	 */
-	once<T = any>(event: string, listener: Listener<T>): void {
+	once<T = any>(
+		event: string,
+		listener: Listener<T>,
+		maxEmits: number = 1
+	): void {
+		let emitCount = 0
+
 		const onceWrapper: Listener<T> = (...args) => {
-			this.off(event, onceWrapper)
-			listener(...args)
+			if (emitCount < maxEmits) {
+				listener(...args)
+				emitCount++
+			}
+
+			if (emitCount >= maxEmits) {
+				this.off(event, onceWrapper) // Removes the listener after reaching the max emissions
+			}
 		}
+
 		this.on(event, onceWrapper)
 	}
 
