@@ -19,6 +19,7 @@ import {
 export class Pulse {
 	private events: EventMap
 	private options: PulseOptions
+	private weakListeners: WeakMap<object, Set<Listener<any>>>
 
 	/**
 	 * Creates a new Pulse instance.
@@ -26,6 +27,7 @@ export class Pulse {
 	 * @param options - Optional configuration for the EventEmitter.
 	 */
 	constructor(options: PulseOptions = {}) {
+		this.weakListeners = new WeakMap()
 		this.events = new Map()
 		this.options = options
 	}
@@ -40,6 +42,13 @@ export class Pulse {
 		if (!this.events.has(event)) {
 			this.events.set(event, [])
 		}
+
+		if (listener instanceof Object) {
+			let listenersSet = this.weakListeners.get(listener) || new Set()
+			listenersSet.add(listener)
+			this.weakListeners.set(listener, listenersSet)
+		}
+
 		this.events.get(event)!.push(listener)
 
 		if (
@@ -93,14 +102,27 @@ export class Pulse {
 	off<T = any>(event: string, listener?: Listener<T>): void {
 		if (!this.events.has(event)) return
 
+		const listeners = this.events.get(event)!
+
 		if (!listener) {
+			// Remove all listeners for this event
 			this.events.delete(event)
 		} else {
-			const listeners = this.events.get(event)!.filter((l) => l !== listener)
-			if (listeners.length === 0) {
+			// Remove specific listener for this event
+			const filteredListeners = listeners.filter((l) => l !== listener)
+			if (filteredListeners.length === 0) {
 				this.events.delete(event)
 			} else {
-				this.events.set(event, listeners)
+				this.events.set(event, filteredListeners)
+			}
+
+			// If the listener is an object, clean it up from weak listeners map
+			if (listener instanceof Object) {
+				const listenersSet = this.weakListeners.get(listener)
+				listenersSet?.delete(listener)
+				if (listenersSet?.size === 0) {
+					this.weakListeners.delete(listener)
+				}
 			}
 		}
 	}
