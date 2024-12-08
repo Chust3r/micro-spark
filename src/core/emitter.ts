@@ -1,6 +1,6 @@
 import {
-	PulseOptions,
 	EmitResult,
+	ErrorListener,
 	EventMap,
 	Listener,
 	PatternListener,
@@ -18,19 +18,17 @@ import {
  */
 export class Pulse {
 	private events: EventMap
-	private options: PulseOptions
 	private weakListeners: WeakMap<object, Set<Listener<any>>>
 	private wildcardEvents: Map<RegExp, PatternListener[]> = new Map()
-
+	private errorListeners: Array<ErrorListener> = []
 	/**
 	 * Creates a new Pulse instance.
 	 *
 	 * @param options - Optional configuration for the EventEmitter.
 	 */
-	constructor(options: PulseOptions = {}) {
+	constructor() {
 		this.weakListeners = new WeakMap()
 		this.events = new Map()
-		this.options = options
 	}
 
 	/**
@@ -51,15 +49,6 @@ export class Pulse {
 		}
 
 		this.events.get(event)!.push(listener)
-
-		if (
-			this.options.maxListeners &&
-			this.events.get(event)!.length > this.options.maxListeners
-		) {
-			console.warn(
-				`Max listeners exceeded for event: "${event}". Consider increasing maxListeners or reviewing listener usage.`
-			)
-		}
 	}
 
 	/**
@@ -101,7 +90,6 @@ export class Pulse {
 		pattern: string | RegExp,
 		listener: PatternListener<T>
 	): void {
-		// Asegúrate de que el patrón esté en la forma correcta (Reemplazando "*" por ".*")
 		if (typeof pattern === 'string') {
 			pattern = new RegExp(pattern.replace('*', '.*'))
 		}
@@ -112,6 +100,7 @@ export class Pulse {
 
 		this.wildcardEvents.get(pattern)!.push(listener)
 	}
+
 	/**
 	 * Registers a one-time listener for an event pattern.
 	 *
@@ -124,7 +113,6 @@ export class Pulse {
 		listener: PatternListener<T>,
 		maxEmits: number = 1
 	): void {
-		// Asegúrate de que el patrón esté en la forma correcta (Reemplazando "*" por ".*")
 		if (typeof pattern === 'string') {
 			pattern = new RegExp(pattern.replace('*', '.*'))
 		}
@@ -219,11 +207,11 @@ export class Pulse {
 			for (const listener of listeners) {
 				try {
 					const result = listener(...args)
-
 					if (result instanceof Promise) {
 						promises.push(result)
 					}
 				} catch (err) {
+					this.emitError(event, err as Error)
 					errors.push(err as Error)
 				}
 			}
@@ -231,11 +219,14 @@ export class Pulse {
 
 		for (const [pattern, listeners] of this.wildcardEvents.entries()) {
 			if (pattern.test(event)) {
-				for (const listener of listeners) {
-					try {
-						listener(event, ...args)
-					} catch (err) {
-						errors.push(err as Error)
+				if (listeners && listeners.length > 0) {
+					for (const listener of listeners) {
+						try {
+							listener(event, ...args)
+						} catch (err) {
+							this.emitError(event, err as Error)
+							errors.push(err as Error)
+						}
 					}
 				}
 			}
@@ -249,12 +240,34 @@ export class Pulse {
 						: { success: true }
 				})
 				.catch((err) => {
+					this.emitError(event, err as Error)
 					errors.push(err as Error)
 					return { success: false, errors }
 				})
 		}
 
 		return errors.length > 0 ? { success: false, errors } : { success: true }
+	}
+
+	/**
+	 * Emits an error event. This method is private and can only be called internally to emit error events.
+	 *
+	 * @param event - The event that caused the error.
+	 * @param err - The error that occurred.
+	 */
+	private emitError(event: string, err: Error): void {
+		this.errorListeners.forEach((listener) => {
+			listener(event, err)
+		})
+	}
+
+	/**
+	 * Registers an error handler to listen for all emitted errors.
+	 *
+	 * @param handler - A function that will handle emitted errors.
+	 */
+	onError(handler: (event: string, error: Error) => void): void {
+		this.errorListeners.push(handler)
 	}
 
 	/**
@@ -268,47 +281,21 @@ export class Pulse {
 	}
 
 	/**
-	 * Retrieves the number of listeners for a specific event.
-	 *
-	 * @param event - The name of the event.
-	 * @returns The count of listeners for the event.
-	 */
-	listenerCount(event: string): number {
-		return this.listeners(event).length
-	}
-
-	/**
 	 * Removes all listeners for a specific event or all events.
 	 *
 	 * @param event - *(Optional)* The name of the event. If not provided, all events are cleared.
 	 */
 	clear(event?: string): void {
 		if (event) {
-			// Remove listeners for the specific event
 			this.events.delete(event)
-
-			// Remove listeners for wildcard events if exists
 			const wildcardPattern = this.getWildcardPattern(event)
 			if (wildcardPattern) {
 				this.wildcardEvents.delete(wildcardPattern)
 			}
 		} else {
-			// Remove all listeners for exact events
 			this.events.clear()
-
-			// Remove all listeners for wildcard events
 			this.wildcardEvents.clear()
 		}
-	}
-
-	/**
-	 * Check if the event includes a wildcard pattern.
-	 *
-	 * @param event - The event name.
-	 * @returns A boolean indicating if the event includes a wildcard pattern.
-	 */
-	private isWildcardEvent(event: string): boolean {
-		return event.includes('*')
 	}
 
 	/**
@@ -325,26 +312,20 @@ export class Pulse {
 	}
 
 	/**
-	 * Elimina un listener específico o todos los listeners para un evento con patrón comodín.
+	 * Removes a listener for a specific event pattern.
 	 *
-	 * @param event - El nombre del evento con un comodín ('*').
-	 * @param listener - *(Opcional)* El listener específico a eliminar. Si no se proporciona, se eliminan todos los listeners para el patrón.
+	 * @param event - The name of the event.
+	 * @param listener - The listener to remove.
 	 */
-	private removeWildcardListener(
+	private removeWildcardListener<T>(
 		event: string,
-		listener: Listener | undefined
+		listener: Listener<T> | undefined
 	): void {
 		for (const [pattern, listeners] of this.wildcardEvents.entries()) {
 			if (pattern.test(event)) {
-				if (!listener) {
-					this.wildcardEvents.delete(pattern)
-				} else {
-					const filteredListeners = listeners.filter((l) => l !== listener)
-					if (filteredListeners.length === 0) {
-						this.wildcardEvents.delete(pattern)
-					} else {
-						this.wildcardEvents.set(pattern, filteredListeners)
-					}
+				const index = listeners.indexOf(listener as PatternListener)
+				if (index !== -1) {
+					listeners.splice(index, 1)
 				}
 			}
 		}

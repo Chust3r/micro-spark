@@ -7,18 +7,9 @@ export type PatternListener<T = any> = (
 
 export type EventMap = Map<string, Listener[]>
 
-export interface PulseOptions {
-	enableEventHistory?: boolean
-	maxListeners?: number
-}
-
-export interface EventPayload<T = any> {
-	event: string
-	args: T[]
-	timestamp: Date
-}
-
 export interface EmitResult {
 	success: boolean
 	errors?: Error[]
 }
+
+export type ErrorListener = (event: string, err: Error) => void
