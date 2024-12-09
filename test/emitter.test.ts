@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Pulse } from '../core/emitter'
+import { Pulse } from '../src/core/emitter'
 
 describe('Pulse', () => {
 	it('Should register and emit events', () => {
