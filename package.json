@@ -5,13 +5,14 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "tsx src/index.ts",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "vitest"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
 		"@types/node": "^22.10.1",
+		"@vitest/coverage-v8": "^2.1.8",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2",
 		"vite": "^5.4.11",
