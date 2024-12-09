@@ -165,8 +165,13 @@ export class Pulse<Events extends Record<string, any>> {
 			) {
 				listeners.forEach((listener) => {
 					try {
-						const result = listener(...processedArgs)
-						if (result instanceof Promise) promises.push(result)
+						if (key.includes('*')) {
+							const result = listener(event as string, ...processedArgs)
+							if (result instanceof Promise) promises.push(result)
+						} else {
+							const result = listener(...processedArgs)
+							if (result instanceof Promise) promises.push(result)
+						}
 					} catch (err) {
 						this.emitError(event as string, err as Error)
 						errors.push(err as Error)
@@ -206,7 +211,26 @@ export class Pulse<Events extends Record<string, any>> {
 		this.errorListeners.push(handler)
 	}
 
-	// Private helper methods...
+	/**
+	 * Clears the listeners for a specific event, or all listeners if no event is provided.
+	 *
+	 * @param {keyof Events} [event] - The name of the event to clear listeners for. If not provided, clears all listeners.
+	 *
+	 * @example
+	 * emitter.clear('message'); // Clears listeners for the "message" event
+	 * emitter.clear(); // Clears all listeners
+	 */
+	clear<Event extends keyof Events>(event?: Event): void {
+		if (event) {
+			const pattern =
+				this.getWildcardPattern(event as string) || (event as string)
+			if (this.events.has(pattern)) {
+				this.events.delete(pattern)
+			}
+		} else {
+			this.events.clear()
+		}
+	}
 
 	private emitError(event: string, err: Error): void {
 		this.errorListeners.forEach((listener) => listener(event, err))
