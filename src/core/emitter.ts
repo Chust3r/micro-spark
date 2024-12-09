@@ -1,11 +1,41 @@
-import { EmitResult, ErrorListener, EventMap, Listener } from './types'
+import { EmitResult, ErrorListener, Listener } from './types'
 
 /**
- * Pulse is an advanced event emitter class that supports regular events,
- * wildcard pattern matching, weak listeners, and custom error handling.
+ * Pulse is a modern, lightweight, and environment-agnostic event emitter
+ * written in TypeScript. It supports advanced features such as wildcard
+ * pattern matching, weak listeners, and custom error handling.
+ *
+ * @template Events A map of event names to their associated listener parameter types.
+ *
+ * @example
+ * // Defining event types
+ * type Events = {
+ *   message: string;
+ *   error: { code: number; message: string };
+ * };
+ *
+ * // Creating a new Pulse instance
+ * const emitter = new Pulse<Events>();
+ *
+ * // Registering a listener for the "message" event
+ * emitter.on('message', (msg) => {
+ *   console.log(`Received message: ${msg}`);
+ * });
+ *
+ * // Emitting the "message" event
+ * emitter.emit('message', 'Hello, World!');
+ *
+ * // Registering a one-time listener for the "error" event
+ * emitter.once('error', (err) => {
+ *   console.error(`Error occurred: ${err.message} (code: ${err.code})`);
+ * });
+ *
+ * // Emitting the "error" event
+ * emitter.emit('error', { code: 500, message: 'Internal Server Error' });
  */
-export class Pulse {
-	private events: EventMap
+
+export class Pulse<Events extends Record<string, any>> {
+	private events: Map<string, Listener[]>
 	private weakListeners: WeakMap<object, Set<Listener<any>>>
 	private errorListeners: Array<ErrorListener> = []
 
@@ -13,19 +43,28 @@ export class Pulse {
 	 * Creates a new instance of the Pulse event emitter.
 	 */
 	constructor() {
-		this.weakListeners = new WeakMap()
 		this.events = new Map()
+		this.weakListeners = new WeakMap()
 	}
 
 	/**
 	 * Registers a listener for a specific event.
 	 *
-	 * @param {string} event - The name of the event or a wildcard pattern (e.g., `user.*`).
-	 * @param {Listener<T>} listener - The function to be called when the event is emitted.
-	 * @template T - The type of arguments the listener will receive.
+	 * @param {keyof Events} event - The name of the event or a wildcard pattern (e.g., `user.*`).
+	 * @param {Listener<Events[Event]>} listener - The function to be called when the event is emitted.
+	 *
+	 * @example
+	 * emitter.on('message', (msg) => {
+	 *   console.log(`Message: ${msg}`);
+	 * });
 	 */
-	on<T = any>(event: string, listener: Listener<T>): void {
-		const pattern = this.getWildcardPattern(event) || event
+	on<Event extends keyof Events>(
+		event: Event,
+		listener: Listener<Events[Event]>
+	): void {
+		const pattern =
+			this.getWildcardPattern(event as string) || (event as string)
+
 		if (!this.events.has(pattern)) {
 			this.events.set(pattern, [])
 		}
@@ -42,19 +81,23 @@ export class Pulse {
 	/**
 	 * Registers a one-time listener for a specific event.
 	 *
-	 * @param {string} event - The name of the event or a wildcard pattern.
-	 * @param {Listener<T>} listener - The function to be called when the event is emitted.
+	 * @param {keyof Events} event - The name of the event or a wildcard pattern.
+	 * @param {Listener<Events[Event]>} listener - The function to be called when the event is emitted.
 	 * @param {number} [maxEmits=1] - The maximum number of times the listener should be invoked.
-	 * @template T - The type of arguments the listener will receive.
+	 *
+	 * @example
+	 * emitter.once('message', (msg) => {
+	 *   console.log(`One-time message: ${msg}`);
+	 * });
 	 */
-	once<T = any>(
-		event: string,
-		listener: Listener<T>,
+	once<Event extends keyof Events>(
+		event: Event,
+		listener: Listener<Events[Event]>,
 		maxEmits: number = 1
 	): void {
 		let emitCount = 0
 
-		const onceWrapper: Listener<T> = (...args) => {
+		const onceWrapper: Listener<Events[Event]> = (...args) => {
 			if (emitCount < maxEmits) {
 				listener(...args)
 				emitCount++
@@ -70,12 +113,18 @@ export class Pulse {
 	/**
 	 * Removes a listener from a specific event.
 	 *
-	 * @param {string} event - The name of the event or a wildcard pattern.
-	 * @param {Listener<T>} [listener] - The listener function to be removed. If not provided, all listeners for the event will be removed.
-	 * @template T - The type of arguments the listener received.
+	 * @param {keyof Events} event - The name of the event or a wildcard pattern.
+	 * @param {Listener<Events[Event]>} [listener] - The listener function to be removed. If not provided, all listeners for the event will be removed.
+	 *
+	 * @example
+	 * emitter.off('message', listener);
 	 */
-	off<T = any>(event: string, listener?: Listener<T>): void {
-		const pattern = this.getWildcardPattern(event) || event
+	off<Event extends keyof Events>(
+		event: Event,
+		listener?: Listener<Events[Event]>
+	): void {
+		const pattern =
+			this.getWildcardPattern(event as string) || (event as string)
 		if (this.events.has(pattern)) {
 			if (!listener) {
 				this.events.delete(pattern)
@@ -83,14 +132,6 @@ export class Pulse {
 				const listeners = this.events.get(pattern)!
 				const filtered = listeners.filter((l) => l !== listener)
 				this.events.set(pattern, filtered)
-
-				if (listener instanceof Object) {
-					const listenersSet = this.weakListeners.get(listener)
-					listenersSet?.delete(listener)
-					if (listenersSet?.size === 0) {
-						this.weakListeners.delete(listener)
-					}
-				}
 			}
 		}
 	}
@@ -98,31 +139,36 @@ export class Pulse {
 	/**
 	 * Emits an event, invoking all matching listeners.
 	 *
-	 * @param {string} event - The name of the event.
-	 * @param {...T[]} args - Arguments to be passed to the listeners.
-	 * @returns {EmitResult | Promise<EmitResult>} - The result of the emission, either synchronously or as a promise.
-	 * @template T - The type of arguments to be emitted.
+	 * @param {keyof Events} event - The name of the event.
+	 * @param {...Events[Event]} args - Arguments to be passed to the listeners.
+	 *
+	 * @returns {EmitResult | Promise<EmitResult>} The result of the emit operation, including any errors.
+	 *
+	 * @example
+	 * emitter.emit('message', 'Hello, World!');
 	 */
-	emit<T = any>(
-		event: string,
-		...args: T[]
+	emit<Event extends keyof Events>(
+		event: Event,
+		...args: Events[Event][]
 	): EmitResult | Promise<EmitResult> {
 		const errors: Error[] = []
 		const promises: Promise<void>[] = []
 
-		// Pre-process arguments: resolve functions and keep other types as is
 		const processedArgs = args.map((arg) =>
 			typeof arg === 'function' ? arg() : arg
 		)
 
 		for (const [key, listeners] of this.events.entries()) {
-			if (typeof key === 'string' && this.eventMatches(key, event)) {
+			if (
+				typeof key === 'string' &&
+				this.eventMatches(key, event as string)
+			) {
 				listeners.forEach((listener) => {
 					try {
 						const result = listener(...processedArgs)
 						if (result instanceof Promise) promises.push(result)
 					} catch (err) {
-						this.emitError(event, err as Error)
+						this.emitError(event as string, err as Error)
 						errors.push(err as Error)
 					}
 				})
@@ -137,7 +183,7 @@ export class Pulse {
 						: { success: true }
 				)
 				.catch((err) => {
-					this.emitError(event, err as Error)
+					this.emitError(event as string, err as Error)
 					errors.push(err as Error)
 					return { success: false, errors }
 				})
@@ -150,41 +196,26 @@ export class Pulse {
 	 * Registers an error handler for the event emitter.
 	 *
 	 * @param {ErrorListener} handler - A function to handle errors emitted during listener execution.
+	 *
+	 * @example
+	 * emitter.onError((event, error) => {
+	 *   console.error(`Error in event "${event}": ${error.message}`);
+	 * });
 	 */
-	onError(handler: (event: string, error: Error) => void): void {
+	onError(handler: ErrorListener): void {
 		this.errorListeners.push(handler)
 	}
 
-	/**
-	 * Emits an error to all registered error listeners.
-	 *
-	 * @private
-	 * @param {string} event - The name of the event where the error occurred.
-	 * @param {Error} err - The error to be emitted.
-	 */
+	// Private helper methods...
+
 	private emitError(event: string, err: Error): void {
 		this.errorListeners.forEach((listener) => listener(event, err))
 	}
 
-	/**
-	 * Returns a wildcard pattern for an event if applicable.
-	 *
-	 * @private
-	 * @param {string} event - The event name to analyze.
-	 * @returns {string | undefined} - The wildcard pattern if applicable, otherwise `undefined`.
-	 */
 	private getWildcardPattern(event: string): string | undefined {
 		return event.includes('*') ? event.replace(/\*/g, '.*') : undefined
 	}
 
-	/**
-	 * Checks if an event matches a pattern.
-	 *
-	 * @private
-	 * @param {string} pattern - The pattern to match.
-	 * @param {string} event - The event name.
-	 * @returns {boolean} - `true` if the event matches the pattern, otherwise `false`.
-	 */
 	private eventMatches(pattern: string, event: string): boolean {
 		if (pattern.includes('.*')) {
 			const regex = new RegExp(`^${pattern}$`)
