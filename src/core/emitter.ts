@@ -1,7 +1,7 @@
 import { EmitResult, ErrorListener, Listener } from './types'
 
 /**
- * Pulse is a modern, lightweight, and environment-agnostic event emitter
+ * Spark is a modern, lightweight, and environment-agnostic event emitter
  * written in TypeScript. It supports advanced features such as wildcard
  * pattern matching, weak listeners, and custom error handling.
  *
@@ -14,8 +14,8 @@ import { EmitResult, ErrorListener, Listener } from './types'
  *   error: { code: number; message: string };
  * };
  *
- * // Creating a new Pulse instance
- * const emitter = new Pulse<Events>();
+ * // Creating a new Spark instance
+ * const emitter = new Spark<Events>();
  *
  * // Registering a listener for the "message" event
  * emitter.on('message', (msg) => {
@@ -34,13 +34,13 @@ import { EmitResult, ErrorListener, Listener } from './types'
  * emitter.emit('error', { code: 500, message: 'Internal Server Error' });
  */
 
-export class Pulse<Events extends Record<string, any>> {
+export class Spark<Events extends Record<string, any>> {
 	private events: Map<string, Listener[]>
 	private weakListeners: WeakMap<object, Set<Listener<any>>>
 	private errorListeners: Array<ErrorListener> = []
 
 	/**
-	 * Creates a new instance of the Pulse event emitter.
+	 * Creates a new instance of the Spark event emitter.
 	 */
 	constructor() {
 		this.events = new Map()
