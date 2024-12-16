@@ -4,11 +4,11 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"dev": "tsx src/index.ts",
+		"build": "tsc",
 		"test": "vitest"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "Chust3r",
 	"license": "ISC",
 	"devDependencies": {
 		"@types/node": "^22.10.1",
