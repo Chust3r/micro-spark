@@ -1,14 +1,14 @@
-# Spark
+# MicroSpark
 
-`Spark` is a **modern**, **lightweight**, and **environment-agnostic** event emitter library built in **TypeScript**.  
+`MicroSpark` is a **modern**, **lightweight**, and **environment-agnostic** event emitter library built in **TypeScript**.  
 It's designed for **complex event-driven systems** in **Node.js**, **Deno**, **Bun**, and browsers.  
 It combines simplicity with powerful features for **maximum flexibility** and performance.
 
 ## ⚡ Quick Example
 
 ```ts
-import { Spark } from 'spark'
-const spark = new Spark()
+import { MicroSpark } from 'micro-spark'
+const spark = new MicroSpark()
 spark.on('message', (msg) => console.log(msg))
 spark.emit('message', 'Hello, World!')
 ```
@@ -25,24 +25,24 @@ spark.emit('message', 'Hello, World!')
 
 ## 📦 Installation
 
-Install `spark` with your favorite package manager:
+Install `micro-spark` with your favorite package manager:
 
 ### npm:
 
 ```bash
-npm install spark
+npm install micro-spark
 ```
 
 ### yarn:
 
 ```bash
-yarn add spark
+yarn add micro-spark
 ```
 
 ### bun:
 
 ```bash
-bun add spark
+bun add micro-spark
 ```
 
 ---
@@ -51,10 +51,10 @@ bun add spark
 
 ### 1. Basic Example with Event Typing
 
-Define event types and create a strongly-typed `Spark` instance to register and emit events.
+Define event types and create a strongly-typed `MicroSpark` instance to register and emit events.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
 //→ Define event types
 type Events = {
@@ -62,8 +62,8 @@ type Events = {
 	error: { code: number; message: string }
 }
 
-//→ Create a new Spark instance with event typing
-const spark = new Spark<Events>()
+//→ Create a new MicroSpark instance with event typing
+const spark = new MicroSpark<Events>()
 
 //→ Register a listener for the "message" event
 spark.on('message', (msg) => {
@@ -84,13 +84,13 @@ spark.emit('error', { code: 500, message: 'Internal Server Error' })
 
 ### 2. Basic Example without Event Typing
 
-Create an untyped `Spark` instance, allowing for more flexibility but without the benefits of TypeScript type checking.
+Create an untyped `MicroSpark` instance, allowing for more flexibility but without the benefits of TypeScript type checking.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
-//→ Create a new Spark instance without specifying event types
-const spark = new Spark()
+//→ Create a new MicroSpark instance without specifying event types
+const spark = new MicroSpark()
 
 //→ Register a listener for the "message" event
 spark.on('message', (msg: string) => {
@@ -114,7 +114,7 @@ spark.emit('error', { code: 500, message: 'Internal Server Error' })
 Use wildcard patterns to register listeners that match multiple related events.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
 //→ Define event types
 type Events = {
@@ -122,8 +122,8 @@ type Events = {
 	'admin.*': string
 }
 
-//→ Create a new Spark instance with event typing
-const spark = new Spark<Events>()
+//→ Create a new MicroSpark instance with event typing
+const spark = new MicroSpark<Events>()
 
 //→ Register a listener for all user-related events
 spark.on('user.*', (msg) => {
@@ -150,15 +150,15 @@ spark.emit('admin.create', 'Admin created a new user')
 Use asynchronous listeners with the emit method, ensuring promises are handled correctly during event execution.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
 //→ Define event types
 type Events = {
 	fetchData: string
 }
 
-//→ Create a new Spark instance with event typing
-const spark = new Spark<Events>()
+//→ Create a new MicroSpark instance with event typing
+const spark = new MicroSpark<Events>()
 
 //→ Register an asynchronous listener for the "fetchData" event
 spark.on('fetchData', async (url) => {
@@ -173,13 +173,13 @@ spark.emit('fetchData', 'https://jsonplaceholder.typicode.com/posts')
 
 ### 5. Dynamic Event Handling (No Typing)
 
-Handle dynamic events with an untyped `Spark` instance for complete flexibility.
+Handle dynamic events with an untyped `MicroSpark` instance for complete flexibility.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
-//→ Create a new Spark instance without event typing
-const spark = new Spark()
+//→ Create a new MicroSpark instance without event typing
+const spark = new MicroSpark()
 
 //→ Register a listener for any event
 spark.on('dynamicEvent', (data: any) => {
@@ -195,15 +195,15 @@ spark.emit('dynamicEvent', { id: 1, name: 'Dynamic' })
 Implement custom error listeners to handle errors emitted during event processing.
 
 ```ts
-import { Spark } from 'spark'
+import { MicroSpark } from 'micro-spark'
 
 //→ Define event types
 type Events = {
 	message: string
 }
 
-//→ Create a new Spark instance with event typing
-const spark = new Spark<Events>()
+//→ Create a new MicroSpark instance with event typing
+const spark = new MicroSpark<Events>()
 
 //→ Register an error handler
 spark.onError((event, error) => {
@@ -223,7 +223,7 @@ spark.emit('message', 'Hello, World!')
 
 ## 📖 API Documentation
 
-Spark provides a simple and intuitive API to manage events. Below is a detailed description of the available methods:
+MicroSpark provides a simple and intuitive API to manage events. Below is a detailed description of the available methods:
 
 ---
 

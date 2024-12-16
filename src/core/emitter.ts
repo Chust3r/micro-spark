@@ -1,7 +1,7 @@
 import { EmitResult, ErrorListener, Listener } from './types'
 
 /**
- * Spark is a modern, lightweight, and environment-agnostic event emitter
+ * MicroSpark is a modern, lightweight, and environment-agnostic event emitter
  * written in TypeScript. It supports advanced features such as wildcard
  * pattern matching, weak listeners, and custom error handling.
  *
@@ -34,7 +34,7 @@ import { EmitResult, ErrorListener, Listener } from './types'
  * emitter.emit('error', { code: 500, message: 'Internal Server Error' });
  */
 
-export class Spark<Events extends Record<string, any>> {
+export class MicroSpark<Events extends Record<string, any>> {
 	private events: Map<string, Listener[]>
 	private weakListeners: WeakMap<object, Set<Listener<any>>>
 	private errorListeners: Array<ErrorListener> = []
