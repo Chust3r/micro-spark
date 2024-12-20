@@ -149,7 +149,7 @@ export class MicroSpark<Events extends Record<string, any>> {
 	 */
 	emit<Event extends keyof Events>(
 		event: Event,
-		...args: Events[Event][]
+		...args: Parameters<Events[Event]>
 	): EmitResult | Promise<EmitResult> {
 		const errors: Error[] = []
 		const promises: Promise<void>[] = []
