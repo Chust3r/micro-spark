@@ -1,13 +1,13 @@
 {
 	"name": "micro-spark",
-	"version": "3.0.3",
+	"version": "3.0.4",
 	"description": "Micro-Spark is a modern, lightweight, and environment-agnostic event emitter library built in TypeScript. It is designed for complex event-driven systems across various environments such as Node.js, Deno, Bun, and browsers. With features like wildcard events, weak listeners, and custom error handling, it combines simplicity, flexibility, and performance for developers building event-driven applications.",
 	"main": "index.js",
 	"scripts": {
-		"build": "vite build",
-		"test": "vitest",
-		"lint": "biome check --write"
-	},
+  "build": "vite build && tsc --declaration --outDir dist",
+  "test": "vitest",
+  "lint": "biome check --write"
+},
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"keywords": [
