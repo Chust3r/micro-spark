@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from 'vitest'
-import { Pulse } from '../src/core/emitter'
+import { describe, expect, it, vi } from 'vitest'
+import { MicroSpark } from '../src/core/emitter'
 
-describe('Pulse', () => {
+describe('MicroSpark', () => {
 	it('Should register and emit events', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('test', listener)
@@ -14,7 +14,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should handle one-time listeners with a limit', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.once('test', listener, 2)
@@ -28,7 +28,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should match events with patterns', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('user:*', listener)
@@ -41,7 +41,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should remove specific listeners', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('test', listener)
@@ -52,7 +52,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should remove all listeners for an event', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
@@ -66,7 +66,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should handle error listeners', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const errorListener = vi.fn()
 		const faultyListener = vi.fn(() => {
 			throw new Error('Test Error')
@@ -81,7 +81,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should clear all events', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('event1', listener)
@@ -96,7 +96,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should clear listeners for a specific event', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('test', listener)
@@ -107,7 +107,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should support wildcard events with patterns', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('event:*', listener)
@@ -120,7 +120,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should emit multiple events with different listeners', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
@@ -137,7 +137,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should not call listeners after being removed', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener = vi.fn()
 
 		emitter.on('test', listener)
@@ -148,7 +148,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should emit multiple events at once', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
@@ -165,7 +165,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should handle multiple listeners for the same event', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
@@ -181,7 +181,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should handle multiple listeners with patterns', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
@@ -200,7 +200,7 @@ describe('Pulse', () => {
 	})
 
 	it('Should handle event listeners being removed during emission', () => {
-		const emitter = new Pulse()
+		const emitter = new MicroSpark()
 		const listener1 = vi.fn()
 		const listener2 = vi.fn()
 
