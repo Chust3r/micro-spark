@@ -1,11 +1,20 @@
-/// <reference types="vitest" />
-
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-	test: {
-		coverage: {
-			reporter: ['text', 'json', 'html'],
+	build: {
+		lib: {
+			entry: 'src/index.ts',
+			name: 'MicroSpark',
+			fileName: (format) => `micro-spark.${format}.js`,
 		},
+		rollupOptions: {
+			output: {
+				minifyInternalExports: true,
+			},
+		},
+		minify: 'terser',
+		sourcemap: true,
+		target: 'esnext',
+		emptyOutDir: true,
 	},
-});
+})
